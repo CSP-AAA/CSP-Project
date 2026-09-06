@@ -10,12 +10,14 @@ async function startServer() {
   try {
     await connectDatabase();
 
-    // Sync can save data only after the database and indexes are ready.
-    await startSyncScheduler();
-
+    // Serve database reads while the optional startup sync runs. An external
+    // source can be slow even after another source has already saved its TORs.
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    // Sync can save data only after the database and indexes are ready.
+    await startSyncScheduler();
   } catch (error) {
     console.error("Backend startup failed:", error);
     process.exit(1);

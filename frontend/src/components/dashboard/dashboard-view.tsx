@@ -28,6 +28,12 @@ export function DashboardView() {
     queryFn: fetchTorsForQuery,
     retry: 30,
     retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 5_000),
+    // The API now serves while its optional startup sync is running. If the
+    // first read wins that race, check again until at least one TOR is saved.
+    refetchInterval: (query) =>
+      Array.isArray(query.state.data) && query.state.data.length === 0
+        ? 2_000
+        : false,
   });
 
   if (isPending || (isFetching && tors.length === 0)) {
