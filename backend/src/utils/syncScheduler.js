@@ -1,5 +1,7 @@
 const cron = require("node-cron");
-const { syncAllSources } = require("./syncService");
+const { syncAllSources } = require("../services/tor/syncService");
+
+// Schedule the TOR synchronization workflow without exposing cron concerns to controllers.
 
 async function startSyncScheduler() {
   async function runSync(trigger) {

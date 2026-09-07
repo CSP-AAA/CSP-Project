@@ -11,12 +11,12 @@ const {
   DEVELOPMENT_TERMS,
   IT_CONTEXT_TERMS,
   EXCLUDE_TERMS,
-} = require("../constants/bmaConstants");
+} = require("../../../constants/bmaConstants");
 const {
   classifyCategory,
   parseBudget,
   wait,
-} = require("../utils/torUtils");
+} = require("../../../utils/torUtils");
 
 // This adapter is separate from SME-GP because e-GP2 exposes a different GET API
 // and response shape even though both sources become the same TOR document later.

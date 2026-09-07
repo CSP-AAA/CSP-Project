@@ -8,12 +8,12 @@ const {
   SEARCH_TERMS,
   INCLUDE_KEYWORDS,
   EXCLUDE_KEYWORDS,
-} = require("../constants/smeGpConstants");
+} = require("../../../constants/smeGpConstants");
 const {
   classifyCategory,
   parseBudget,
   wait,
-} = require("../utils/torUtils");
+} = require("../../../utils/torUtils");
 
 // This adapter owns the SME-GP POST payload and its DataTables-style paging format.
 

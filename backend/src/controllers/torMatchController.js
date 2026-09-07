@@ -1,8 +1,8 @@
-const TORMatch = require("../models/TORMatch");
+const torMatchService = require("../services/tor/torMatchService");
 
 async function createTorMatch(request, response) {
   try {
-    const torMatch = await TORMatch.create(request.body);
+    const torMatch = await torMatchService.createTorMatch(request.body);
     return response.status(201).json(torMatch);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -11,7 +11,7 @@ async function createTorMatch(request, response) {
 
 async function getAllTorMatches(request, response) {
   try {
-    const torMatches = await TORMatch.find();
+    const torMatches = await torMatchService.getAllTorMatches();
     return response.status(200).json(torMatches);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -20,7 +20,7 @@ async function getAllTorMatches(request, response) {
 
 async function getTorMatchById(request, response) {
   try {
-    const torMatch = await TORMatch.findById(request.params.id);
+    const torMatch = await torMatchService.getTorMatchById(request.params.id);
 
     if (!torMatch) {
       return response.status(404).json({ message: "TOR match not found." });
@@ -34,10 +34,9 @@ async function getTorMatchById(request, response) {
 
 async function updateTorMatch(request, response) {
   try {
-    const torMatch = await TORMatch.findByIdAndUpdate(
+    const torMatch = await torMatchService.updateTorMatch(
       request.params.id,
       request.body,
-      { returnDocument: "after", runValidators: true },
     );
 
     if (!torMatch) {
@@ -52,7 +51,7 @@ async function updateTorMatch(request, response) {
 
 async function deleteTorMatch(request, response) {
   try {
-    const torMatch = await TORMatch.findByIdAndDelete(request.params.id);
+    const torMatch = await torMatchService.deleteTorMatch(request.params.id);
 
     if (!torMatch) {
       return response.status(404).json({ message: "TOR match not found." });

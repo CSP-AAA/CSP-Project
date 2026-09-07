@@ -1,8 +1,8 @@
-const VendorProfile = require("../models/VendorProfile");
+const vendorProfileService = require("../services/vendor/vendorProfileService");
 
 async function createVendorProfile(request, response) {
   try {
-    const vendorProfile = await VendorProfile.create(request.body);
+    const vendorProfile = await vendorProfileService.createVendorProfile(request.body);
     return response.status(201).json(vendorProfile);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -11,7 +11,7 @@ async function createVendorProfile(request, response) {
 
 async function getAllVendorProfiles(request, response) {
   try {
-    const vendorProfiles = await VendorProfile.find();
+    const vendorProfiles = await vendorProfileService.getAllVendorProfiles();
     return response.status(200).json(vendorProfiles);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -20,7 +20,9 @@ async function getAllVendorProfiles(request, response) {
 
 async function getVendorProfileById(request, response) {
   try {
-    const vendorProfile = await VendorProfile.findById(request.params.id);
+    const vendorProfile = await vendorProfileService.getVendorProfileById(
+      request.params.id,
+    );
 
     if (!vendorProfile) {
       return response.status(404).json({ message: "Vendor profile not found." });
@@ -34,10 +36,9 @@ async function getVendorProfileById(request, response) {
 
 async function updateVendorProfile(request, response) {
   try {
-    const vendorProfile = await VendorProfile.findByIdAndUpdate(
+    const vendorProfile = await vendorProfileService.updateVendorProfile(
       request.params.id,
       request.body,
-      { returnDocument: "after", runValidators: true },
     );
 
     if (!vendorProfile) {
@@ -52,7 +53,9 @@ async function updateVendorProfile(request, response) {
 
 async function deleteVendorProfile(request, response) {
   try {
-    const vendorProfile = await VendorProfile.findByIdAndDelete(request.params.id);
+    const vendorProfile = await vendorProfileService.deleteVendorProfile(
+      request.params.id,
+    );
 
     if (!vendorProfile) {
       return response.status(404).json({ message: "Vendor profile not found." });

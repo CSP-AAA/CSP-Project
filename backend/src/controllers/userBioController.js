@@ -1,8 +1,8 @@
-const UserBio = require("../models/UserBio");
+const userBioService = require("../services/user/userBioService");
 
 async function createUserBio(request, response) {
   try {
-    const userBio = await UserBio.create(request.body);
+    const userBio = await userBioService.createUserBio(request.body);
     return response.status(201).json(userBio);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -11,7 +11,7 @@ async function createUserBio(request, response) {
 
 async function getAllUserBios(request, response) {
   try {
-    const userBios = await UserBio.find();
+    const userBios = await userBioService.getAllUserBios();
     return response.status(200).json(userBios);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -20,7 +20,7 @@ async function getAllUserBios(request, response) {
 
 async function getUserBioById(request, response) {
   try {
-    const userBio = await UserBio.findById(request.params.id);
+    const userBio = await userBioService.getUserBioById(request.params.id);
 
     if (!userBio) {
       return response.status(404).json({ message: "User bio not found." });
@@ -34,10 +34,9 @@ async function getUserBioById(request, response) {
 
 async function updateUserBio(request, response) {
   try {
-    const userBio = await UserBio.findByIdAndUpdate(
+    const userBio = await userBioService.updateUserBio(
       request.params.id,
       request.body,
-      { returnDocument: "after", runValidators: true },
     );
 
     if (!userBio) {
@@ -52,7 +51,7 @@ async function updateUserBio(request, response) {
 
 async function deleteUserBio(request, response) {
   try {
-    const userBio = await UserBio.findByIdAndDelete(request.params.id);
+    const userBio = await userBioService.deleteUserBio(request.params.id);
 
     if (!userBio) {
       return response.status(404).json({ message: "User bio not found." });

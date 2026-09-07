@@ -2,9 +2,8 @@ require("dotenv").config();
 
 const app = require("./app");
 const { connectDatabase } = require("./utils/connectDatabase");
-const { startSyncScheduler } = require("./services/syncScheduler");
-
-const PORT = process.env.PORT || 5175;
+const { startSyncScheduler } = require("./utils/syncScheduler");
+const PORT = process.env.PORT;
 
 async function startServer() {
   try {

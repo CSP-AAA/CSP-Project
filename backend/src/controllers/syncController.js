@@ -1,4 +1,4 @@
-const syncService = require("../services/syncService");
+const syncService = require("../services/tor/syncService");
 
 // Manual synchronization for both procurement APIs or one selected source.
 async function triggerSyncAll(request, response) {

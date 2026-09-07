@@ -1,6 +1,6 @@
-const torService = require("./torService");
-const { fetchSmeGpTors } = require("./smeGpApi");
-const { fetchBmaTors } = require("./bmaApi");
+const torRepository = require("../../repositories/torRepository");
+const { fetchSmeGpTors } = require("./api/smeGpApi");
+const { fetchBmaTors } = require("./api/bmaApi");
 
 // Persist one normalized batch. Upserting by external refId makes repeat syncs idempotent.
 async function saveTorBatch(tors) {
@@ -8,7 +8,7 @@ async function saveTorBatch(tors) {
 
   for (const torData of tors) {
     try {
-      await torService.upsertTorByRefId(torData.refId, torData);
+      await torRepository.upsertByRefId(torData.refId, torData);
       saved++;
     } catch (err) {
       console.error(`Error saving TOR ${torData.refId}:`, err.message);

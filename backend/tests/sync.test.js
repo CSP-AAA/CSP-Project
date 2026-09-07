@@ -5,8 +5,8 @@ const vm = require("node:vm");
 const { test } = require("node:test");
 const smeConfig = require("../src/constants/smeGpConstants");
 const bmaConfig = require("../src/constants/bmaConstants");
-const smeApi = require("../src/services/smeGpApi");
-const bmaApi = require("../src/services/bmaApi");
+const smeApi = require("../src/services/tor/api/smeGpApi");
+const bmaApi = require("../src/services/tor/api/bmaApi");
 
 // Load coordination modules with fake infrastructure, without starting MongoDB
 // or registering a real cron job. Source tests below run the actual API modules.
@@ -87,10 +87,10 @@ test("BMA uses its own GET configuration, follows pages, and maps software plans
 
 test("sync service upserts each source and preserves the HTTP summary fields", async () => {
   const saved = [];
-  const service = loadModule("../src/services/syncService.js", {
-    "./torService": { upsertTorByRefId: async (refId, tor) => saved.push([refId, tor]) },
-    "./smeGpApi": { fetchSmeGpTors: async () => ({ source: "SME-GP", method: "POST", fetched: 3, tors: [{ refId: "sme-1" }] }) },
-    "./bmaApi": { fetchBmaTors: async () => ({ source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 4, tors: [{ refId: "bma-1" }] }) },
+  const service = loadModule("../src/services/tor/syncService.js", {
+    "../../repositories/torRepository": { upsertByRefId: async (refId, tor) => saved.push([refId, tor]) },
+    "./api/smeGpApi": { fetchSmeGpTors: async () => ({ source: "SME-GP", method: "POST", fetched: 3, tors: [{ refId: "sme-1" }] }) },
+    "./api/bmaApi": { fetchBmaTors: async () => ({ source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 4, tors: [{ refId: "bma-1" }] }) },
   });
   const result = await service.syncAllSources();
   assert.deepEqual(saved.map(([id]) => id).sort(), ["bma-1", "sme-1"]);
@@ -111,9 +111,9 @@ for (const flag of [undefined, "false", "true"]) {
   test(`sync job honors FETCH_ON_STARTUP=${flag} and schedules 02:00 Bangkok`, async () => {
     let syncs = 0;
     let scheduled;
-    const job = loadModule("../src/services/syncScheduler.js", {
+    const job = loadModule("../src/utils/syncScheduler.js", {
       "node-cron": { schedule: (...args) => { scheduled = args; } },
-      "./syncService": { syncAllSources: async () => { syncs++; } },
+      "../services/tor/syncService": { syncAllSources: async () => { syncs++; } },
     }, { FETCH_ON_STARTUP: flag });
     await job.startSyncScheduler();
     assert.equal(syncs, flag === "true" ? 1 : 0);
@@ -127,9 +127,9 @@ for (const flag of [undefined, "false", "true"]) {
 
 test("startup sync failure still enables the nightly job", async () => {
   let scheduled = false;
-  const job = loadModule("../src/services/syncScheduler.js", {
+  const job = loadModule("../src/utils/syncScheduler.js", {
     "node-cron": { schedule: () => { scheduled = true; } },
-    "./syncService": { syncAllSources: async () => { throw new Error("API unavailable"); } },
+    "../services/tor/syncService": { syncAllSources: async () => { throw new Error("API unavailable"); } },
   }, { FETCH_ON_STARTUP: "true" });
   await job.startSyncScheduler();
   assert.equal(scheduled, true);
