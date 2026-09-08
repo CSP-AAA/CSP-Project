@@ -1,19 +1,14 @@
-const cron = require("node-cron");
-const torService = require("../services/torService");
-const {
-  fetchSmeGpSoftwareTors,
-} = require("./sources/smeGpSource");
-const {
-  fetchBmaEgp2SoftwareTors,
-  fetchBmaPlanProjects,
-} = require("./sources/bmaEgp2PlanSource");
+const torRepository = require("../../repositories/torRepository");
+const { fetchSmeGpTors } = require("./api/smeGpApi");
+const { fetchBmaTors } = require("./api/bmaApi");
 
+// Persist one normalized batch. Upserting by external refId makes repeat syncs idempotent.
 async function saveTorBatch(tors) {
   let saved = 0;
 
   for (const torData of tors) {
     try {
-      await torService.upsertTorByRefId(torData.refId, torData);
+      await torRepository.upsertByRefId(torData.refId, torData);
       saved++;
     } catch (err) {
       console.error(`Error saving TOR ${torData.refId}:`, err.message);
@@ -23,6 +18,7 @@ async function saveTorBatch(tors) {
   return saved;
 }
 
+// Adapt a source's common result into the summary returned by sync endpoints.
 async function syncSource(sourceResultPromise) {
   const result = await sourceResultPromise;
   const saved = await saveTorBatch(result.tors);
@@ -37,29 +33,30 @@ async function syncSource(sourceResultPromise) {
   };
 }
 
-async function syncSmeGpOnly() {
+async function syncSmeGp() {
   console.log("Starting SME-GP data sync...");
-  const result = await syncSource(fetchSmeGpSoftwareTors());
+  const result = await syncSource(fetchSmeGpTors());
   console.log(
     `SME-GP sync complete. Saved/Updated ${result.saved} of ${result.matched} matched TORs.`,
   );
   return result;
 }
 
-async function syncBmaEgp2Only() {
+async function syncBma() {
   console.log("Starting BMA e-GP2 data sync...");
-  const result = await syncSource(fetchBmaEgp2SoftwareTors());
+  const result = await syncSource(fetchBmaTors());
   console.log(
     `BMA e-GP2 sync complete. Saved/Updated ${result.saved} of ${result.matched} matched TORs.`,
   );
   return result;
 }
 
-async function syncProcurementData() {
+async function syncAllSources() {
   console.log("Starting procurement data sync...");
+  // Each source owns its fetch/mapping details; this layer only coordinates saving.
   const [smeGpResult, bmaEgp2Result] = await Promise.all([
-    syncSmeGpOnly(),
-    syncBmaEgp2Only(),
+    syncSmeGp(),
+    syncBma(),
   ]);
 
   console.log(
@@ -80,33 +77,4 @@ async function syncProcurementData() {
   };
 }
 
-function startCronJobs() {
-  // Schedule to run at 00:00 (midnight) every day
-  cron.schedule("0 0 * * *", async () => {
-      console.log("Running scheduled BMA/SME-GP sync job...");
-    try {
-      const result = await syncProcurementData();
-      console.log("Scheduled sync job completed successfully:", result);
-    } catch (error) {
-      console.error("Scheduled sync job failed:", error);
-    }
-  });
-
-  console.log("SME-GP sync cron job initialized.");
-
-  if (String(process.env.FETCH_ON_STARTUP).toLowerCase() === "true") {
-    console.log("FETCH_ON_STARTUP enabled — syncing procurement data...");
-    void syncProcurementData().catch((error) => {
-      console.error("Startup procurement sync failed:", error);
-    });
-  }
-}
-
-module.exports = {
-  fetchBmaPlanProjects,
-  syncBmaEgp2Only,
-  syncProcurementData,
-  syncSmeGpOnly,
-  syncSmeGpData: syncProcurementData,
-  startCronJobs,
-};
+module.exports = { syncAllSources, syncSmeGp, syncBma };

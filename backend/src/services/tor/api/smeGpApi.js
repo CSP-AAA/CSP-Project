@@ -1,23 +1,27 @@
 const {
   API_URL,
+  WEBSITE_URL,
+  RETRY_COUNT,
+  SOURCE,
+  METHOD,
   PAGE_SIZE,
-  API_SEARCHES,
+  SEARCH_TERMS,
   INCLUDE_KEYWORDS,
   EXCLUDE_KEYWORDS,
-} = require("../../constants/smeGpConstants");
+} = require("../../../constants/smeGpConstants");
 const {
   classifyCategory,
   parseBudget,
   wait,
-} = require("../procurementSourceUtils");
+} = require("../../../utils/torUtils");
 
-const SOURCE = "SME-GP";
-const METHOD = "POST";
+// This adapter owns the SME-GP POST payload and its DataTables-style paging format.
 
 function compactText(value) {
   return (value || "").toString().replace(/\s+/g, "").toLowerCase();
 }
 
+// Reject false positives before accepting the first supported software-development term.
 function matchingKeyword(title) {
   const normalizedTitle = compactText(title);
   if (!normalizedTitle) return null;
@@ -32,7 +36,7 @@ function matchingKeyword(title) {
   return null;
 }
 
-async function fetchSearch(searchStr, pageSize = PAGE_SIZE, retries = 3) {
+async function fetchSmeGpSearch(searchStr, pageSize = PAGE_SIZE, retries = RETRY_COUNT) {
   const basePayload = {
     start: "0",
     length: pageSize.toString(),
@@ -41,6 +45,7 @@ async function fetchSearch(searchStr, pageSize = PAGE_SIZE, retries = 3) {
     search: searchStr,
   };
 
+  // The first request provides the total; later requests fetch the remaining offsets.
   let firstResponse;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -108,7 +113,7 @@ function mapSmeGpCandidate(candidate, keyword) {
     agencyId: candidate.deptsubName || "sme-gp",
     publishedAt: candidate.published ? new Date(candidate.published) : new Date(),
     source: SOURCE,
-    egpUrl: candidate.link || "https://thaismegp.com/",
+    egpUrl: candidate.link || WEBSITE_URL,
     category: classifyCategory(keyword),
     budgetThb: parseBudget(candidate.budget),
     status: "published",
@@ -117,14 +122,15 @@ function mapSmeGpCandidate(candidate, keyword) {
   };
 }
 
-async function fetchSmeGpSoftwareTors() {
+async function fetchSmeGpTors() {
   const allRows = [];
-  const results = await Promise.all(API_SEARCHES.map((search) => fetchSearch(search)));
+  const results = await Promise.all(SEARCH_TERMS.map((search) => fetchSmeGpSearch(search)));
 
   results.forEach((rows) => {
     allRows.push(...rows);
   });
 
+  // Several broad searches can return the same project. Deduplicate before mapping/upserting.
   const uniqueCandidates = new Map();
   allRows.forEach((row) => {
     const id = row._id || row.link || JSON.stringify(row);
@@ -150,8 +156,8 @@ async function fetchSmeGpSoftwareTors() {
 }
 
 module.exports = {
-  fetchSearch,
-  fetchSmeGpSoftwareTors,
+  fetchSmeGpSearch,
+  fetchSmeGpTors,
   matchingKeyword,
   method: METHOD,
   source: SOURCE,

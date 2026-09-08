@@ -1,8 +1,8 @@
-const User = require("../models/User");
+const userService = require("../services/user/userService");
 
 async function createUser(request, response) {
   try {
-    const user = await User.create(request.body);
+    const user = await userService.createUser(request.body);
     return response.status(201).json(user);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -11,7 +11,7 @@ async function createUser(request, response) {
 
 async function getAllUsers(request, response) {
   try {
-    const users = await User.find();
+    const users = await userService.getAllUsers();
     return response.status(200).json(users);
   } catch (error) {
     return response.status(500).json({ message: error.message });
@@ -20,7 +20,7 @@ async function getAllUsers(request, response) {
 
 async function getUserById(request, response) {
   try {
-    const user = await User.findById(request.params.id);
+    const user = await userService.getUserById(request.params.id);
 
     if (!user) {
       return response.status(404).json({ message: "User not found." });
@@ -34,15 +34,11 @@ async function getUserById(request, response) {
 
 async function updateUser(request, response) {
   try {
-    const updates = { ...request.body };
-    if (request.user.role !== "admin") {
-      delete updates.role;
-    }
-
-    const user = await User.findByIdAndUpdate(request.params.id, updates, {
-      returnDocument: "after",
-      runValidators: true,
-    });
+    const user = await userService.updateUser(
+      request.params.id,
+      request.body,
+      request.user.role,
+    );
 
     if (!user) {
       return response.status(404).json({ message: "User not found." });
@@ -56,7 +52,7 @@ async function updateUser(request, response) {
 
 async function deleteUser(request, response) {
   try {
-    const user = await User.findByIdAndDelete(request.params.id);
+    const user = await userService.deleteUser(request.params.id);
 
     if (!user) {
       return response.status(404).json({ message: "User not found." });
