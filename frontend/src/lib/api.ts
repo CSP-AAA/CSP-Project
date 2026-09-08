@@ -11,8 +11,12 @@ function apiUrl(path: string) {
   const base = API_URL.replace(/\/+$/, "");
   let normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-  if (base.endsWith("/api") && normalizedPath.startsWith("/api/")) {
-    normalizedPath = normalizedPath.slice(4);
+  if (base.endsWith("/api")) {
+    if (normalizedPath.startsWith("/api/")) {
+      normalizedPath = normalizedPath.slice(4);
+    }
+  } else if (!normalizedPath.startsWith("/api/")) {
+    normalizedPath = `/api${normalizedPath}`;
   }
 
   return `${base}${normalizedPath}`;
