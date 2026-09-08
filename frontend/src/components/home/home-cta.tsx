@@ -6,13 +6,18 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
+import { Surface } from "@/components/ui/surface";
 import { routes } from "@/config/routes";
 
 export function HomeCta() {
   const { t } = useLocale();
 
   return (
-    <section className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+    <Surface
+      as="section"
+      tone="frost"
+      className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between md:p-8"
+    >
       <div className="max-w-2xl space-y-3">
         <h2 className="text-2xl font-semibold tracking-tight text-white md:text-[2rem] md:leading-[1.2]">
           {t("ctaTitle")}
@@ -28,15 +33,10 @@ export function HomeCta() {
             <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
           </Link>
         </Button>
-        <Button
-          asChild
-          size="lg"
-          variant="outline"
-          className="border-white/25 bg-transparent text-white hover:bg-white/10"
-        >
+        <Button asChild size="lg" variant="chrome">
           <Link href={routes.register}>{t("ctaVendorProfile")}</Link>
         </Button>
       </div>
-    </section>
+    </Surface>
   );
 }

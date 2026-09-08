@@ -49,7 +49,7 @@ export function AccountControl() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="inline-flex max-w-52 shrink-0 items-center gap-0.5 rounded-full bg-white/10 p-0.5 text-white outline-none ring-1 ring-white/15 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="inline-flex max-w-52 shrink-0 items-center gap-0.5 rounded-full bg-white/10 p-0.5 text-white outline-none ring-1 ring-white/15 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-ring/30"
         aria-label={name}
       >
         <span className="min-w-0 truncate px-2 text-xs font-medium">{name}</span>

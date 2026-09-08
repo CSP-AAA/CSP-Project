@@ -10,6 +10,7 @@ import {
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Surface } from "@/components/ui/surface";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
 
 const CAPABILITIES: {
@@ -34,9 +35,10 @@ export function HomeCapabilities() {
     >
       <ul className="grid gap-4 md:grid-cols-2">
         {CAPABILITIES.map((capability) => (
-          <li
+          <Surface
+            as="li"
             key={capability.title}
-            className="flex gap-4 rounded-[8px] bg-card p-6 ring-1 ring-foreground/10"
+            className="flex gap-4 p-6"
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] bg-[var(--palette-orange-100)]">
               <HugeiconsIcon
@@ -53,7 +55,7 @@ export function HomeCapabilities() {
                 {t(capability.body)}
               </p>
             </div>
-          </li>
+          </Surface>
         ))}
       </ul>
     </HomeSection>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { Surface } from "@/components/ui/surface";
 import { cn } from "@/lib/utils";
 
 export function HomeSection({
@@ -58,6 +59,7 @@ export function HomeSection({
   );
 }
 
+/** Full-width canvas fill. Content sits on Surface / Card inside the column. */
 export function HomeBand({
   tone = "default",
   children,
@@ -66,7 +68,9 @@ export function HomeBand({
   children: ReactNode;
 }) {
   return (
-    <div
+    <Surface
+      tone="canvas"
+      data-slot="page-band"
       className={cn(
         tone === "paper" && "story-paper",
         tone === "dark" && "bg-[var(--palette-teal-800)]",
@@ -74,6 +78,6 @@ export function HomeBand({
       )}
     >
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24">{children}</div>
-    </div>
+    </Surface>
   );
 }

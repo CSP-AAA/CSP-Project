@@ -11,6 +11,7 @@ import {
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Surface } from "@/components/ui/surface";
 import { routes } from "@/config/routes";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
@@ -59,16 +60,13 @@ export function HomeRoles() {
     >
       <div className="grid gap-4 md:grid-cols-3">
         {ROLES.map((role) => (
-          <Link
+          <Surface
             key={role.title}
-            href={role.href}
-            className={cn(
-              "group flex h-full flex-col gap-4 rounded-[8px] p-6 ring-1 transition-colors",
-              role.emphasis
-                ? "bg-card ring-foreground/10 hover:ring-primary/40"
-                : "bg-muted/40 ring-transparent hover:ring-foreground/10"
-            )}
+            asChild
+            tone={role.emphasis ? "default" : "muted"}
+            className="group h-full hover:ring-primary/40"
           >
+          <Link href={role.href} className="flex h-full flex-col gap-4 p-6">
             <span
               className={cn(
                 "flex size-10 items-center justify-center rounded-[8px]",
@@ -101,6 +99,7 @@ export function HomeRoles() {
               />
             </span>
           </Link>
+          </Surface>
         ))}
       </div>
     </HomeSection>

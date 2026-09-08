@@ -7,6 +7,7 @@ import { Menu01Icon } from "@hugeicons/core-free-icons";
 import { AccountControl } from "@/components/layout/account-control";
 import { BrandLockup } from "@/components/layout/brand-lockup";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ViewToggle } from "@/components/layout/view-toggle";
 import { AlertsPopover } from "@/components/notifications/alerts-popover";
 import { useAudience } from "@/components/providers/audience-provider";
@@ -21,7 +22,7 @@ import { dictionary, type DictionaryKey } from "@/lib/i18n/dictionary";
 /**
  * Full-width chrome above the sidebar + content canvas.
  * Left: product logo. Right: account-level controls.
- * Sidebar collapse lives in the sidebar footer; mobile gets a menu button only.
+ * Mobile gets a menu button that opens the navigation drawer.
  */
 export function ShellAppBar({
   workspace,
@@ -55,7 +56,7 @@ export function ShellAppBar({
               href={audience === "vendor" ? routes.app.home : routes.home}
               className="inline-flex h-12 items-center md:h-16"
             >
-              <BrandLockup size="lg" priority />
+              <BrandLockup size="lg" priority onDark />
             </Link>
             {workspace ? (
               <AppBar.WorkspaceName className="hidden sm:flex">
@@ -69,6 +70,7 @@ export function ShellAppBar({
           {showAlerts ? <AlertsPopover tone="chrome" /> : null}
           {!user ? <ViewToggle tone="chrome" className="hidden sm:inline-flex" /> : null}
           <LocaleToggle tone="chrome" />
+          <ThemeToggle tone="chrome" />
           <AccountControl />
         </AppBar.Right>
       </AppBar.Primary>

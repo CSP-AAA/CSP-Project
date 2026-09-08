@@ -6,6 +6,7 @@ import { ArrowRight01Icon, LinkSquare02Icon } from "@hugeicons/core-free-icons";
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Surface } from "@/components/ui/surface";
 import { AGENCIES } from "@/config/agencies";
 import { listingsHref, routes } from "@/config/routes";
 
@@ -23,10 +24,11 @@ export function HomeCoverage() {
           const source = agency.sources[0];
           return (
             <li key={agency.id}>
-              <Link
-                href={listingsHref(agency.id)}
-                className="flex h-full flex-col gap-2 rounded-[8px] bg-card p-5 ring-1 ring-foreground/10 transition-colors hover:ring-primary/40"
+              <Surface
+                asChild
+                className="flex h-full flex-col gap-2 p-5 hover:ring-primary/40"
               >
+              <Link href={listingsHref(agency.id)}>
                 <span className="text-lg font-semibold tracking-tight">
                   {locale === "th" ? agency.shortTh : agency.shortEn}
                 </span>
@@ -39,12 +41,13 @@ export function HomeCoverage() {
                   </span>
                 ) : null}
               </Link>
+              </Surface>
             </li>
           );
         })}
       </ul>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[8px] bg-[var(--palette-teal-50)] px-5 py-4">
+      <Surface className="flex flex-wrap items-center justify-between gap-4 bg-[var(--palette-teal-50)] px-5 py-4 ring-0">
         <p className="flex items-center gap-2 text-sm text-[var(--palette-teal-900)]">
           <HugeiconsIcon icon={LinkSquare02Icon} strokeWidth={1.75} className="size-4" />
           {t("coverageTrust")}
@@ -56,7 +59,7 @@ export function HomeCoverage() {
           {t("viewAllTors")}
           <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5" />
         </Link>
-      </div>
+      </Surface>
     </HomeSection>
   );
 }

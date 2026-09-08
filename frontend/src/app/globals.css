@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 @import "../styles/theme.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -50,7 +52,7 @@
   }
 
   .story-paper {
-    background: var(--palette-gray-850);
+    background: var(--band-paper);
   }
 
   /* Wallpaper behind frosted AppBar / Sidebar so the blur has chroma. */

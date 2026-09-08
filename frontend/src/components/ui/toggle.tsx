@@ -22,9 +22,24 @@ type ToggleProps<T extends string> = {
   tone?: "default" | "chrome";
 };
 
+const frostTrack =
+  "backdrop-blur-md backdrop-saturate-150";
+
+const pageFrostTrack =
+  "bg-surface-frost shadow-[inset_0_1px_0_0_var(--surface-frost-highlight)] ring-1 ring-[var(--surface-frost-ring)]";
+
+const chromeFrostTrack =
+  "bg-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] ring-1 ring-white/12";
+
+const pageFrostThumb =
+  "bg-[var(--toggle-thumb)] shadow-none ring-0 backdrop-blur-md";
+
+const chromeFrostThumb =
+  "bg-white/[0.08] text-white shadow-none ring-0 backdrop-blur-md";
+
 /**
- * Two-or-more option segmented toggle.
- * Active option gets a solid thumb — no absolute sliding math (avoids layout bugs).
+ * Frosted segmented toggle. Track and thumb stay translucent + blurred
+ * so they read as glass in both light and dark.
  */
 function Toggle<T extends string>({
   value,
@@ -41,9 +56,8 @@ function Toggle<T extends string>({
       aria-label={ariaLabel}
       className={cn(
         "inline-flex shrink-0 items-center rounded-full p-0.5",
-        tone === "chrome"
-          ? "bg-white/10 ring-1 ring-white/15"
-          : "bg-muted",
+        frostTrack,
+        tone === "chrome" ? chromeFrostTrack : pageFrostTrack,
         className
       )}
     >
@@ -60,12 +74,12 @@ function Toggle<T extends string>({
             className={cn(
               "inline-flex shrink-0 items-center justify-center rounded-full font-medium whitespace-nowrap transition-colors",
               size === "sm" ? "h-6 min-w-6 px-1.5 text-[0.65rem]" : "h-7 min-w-7 px-2.5 text-xs",
-              tone === "chrome"
-                ? selected
-                  ? "bg-white/20 text-white shadow-sm"
-                  : "text-white/55 hover:text-white"
-                : selected
-                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/70"
+              selected
+                ? tone === "chrome"
+                  ? chromeFrostThumb
+                  : cn(pageFrostThumb, "text-foreground")
+                : tone === "chrome"
+                  ? "text-white/55 hover:text-white"
                   : "text-muted-foreground hover:text-foreground"
             )}
           >

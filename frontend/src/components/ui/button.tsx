@@ -22,7 +22,7 @@ const buttonVariants = cva(
           "bg-transparent text-foreground shadow-none ring-transparent backdrop-blur-none hover:bg-foreground/8 hover:ring-foreground/12 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:backdrop-blur-md",
         destructive: "text-destructive",
         chrome:
-          "bg-white/15 text-white ring-white/20 hover:bg-white/25",
+          "bg-white/15 text-white ring-white/20 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.28)] hover:bg-white/25",
         link: "bg-transparent text-primary shadow-none ring-0 backdrop-blur-none hover:bg-transparent hover:underline hover:underline-offset-4",
       },
       size: {
