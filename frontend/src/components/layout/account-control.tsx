@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useSession } from "@/components/providers/session-provider";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,12 +38,9 @@ export function AccountControl() {
 
   if (!user) {
     return (
-      <Link
-        href={routes.login}
-        className="inline-flex h-8 shrink-0 items-center rounded-full bg-primary/45 px-3 text-xs font-medium text-primary ring-1 ring-primary/60 backdrop-blur-md hover:bg-primary/55"
-      >
-        {t("signUpLogin")}
-      </Link>
+      <Button asChild>
+        <Link href={routes.login}>{t("signUpLogin")}</Link>
+      </Button>
     );
   }
 
