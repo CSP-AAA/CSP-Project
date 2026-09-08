@@ -93,6 +93,13 @@ function startCronJobs() {
   });
 
   console.log("SME-GP sync cron job initialized.");
+
+  if (String(process.env.FETCH_ON_STARTUP).toLowerCase() === "true") {
+    console.log("FETCH_ON_STARTUP enabled — syncing procurement data...");
+    void syncProcurementData().catch((error) => {
+      console.error("Startup procurement sync failed:", error);
+    });
+  }
 }
 
 module.exports = {
