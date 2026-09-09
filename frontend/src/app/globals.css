@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../styles/tokens.css";
 @import "../styles/theme.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -30,7 +31,13 @@
   .hero-atmosphere {
     background:
       radial-gradient(ellipse 80% 60% at 70% 20%, var(--hero-glow), transparent 55%),
-      linear-gradient(135deg, var(--hero-from), var(--hero-via) 45%, var(--hero-to));
+      linear-gradient(
+        135deg,
+        var(--hero-from),
+        var(--hero-via) 35%,
+        var(--hero-via2) 65%,
+        var(--hero-to)
+      );
   }
 
   /*

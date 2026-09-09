@@ -6,15 +6,15 @@ import {
   ArrowRight01Icon,
   Briefcase01Icon,
   GlobeIcon,
-  Shield01Icon,
 } from "@hugeicons/core-free-icons";
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Button } from "@/components/ui/button";
+import { FrostCard } from "@/components/ui/frost-card";
 import { Surface } from "@/components/ui/surface";
 import { routes } from "@/config/routes";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
-import { cn } from "@/lib/utils";
 
 const ROLES: {
   title: DictionaryKey;
@@ -22,7 +22,8 @@ const ROLES: {
   cta: DictionaryKey;
   href: string;
   icon: IconSvgElement;
-  emphasis?: boolean;
+  iconBg: string;
+  iconFg: string;
 }[] = [
   {
     title: "rolePublicTitle",
@@ -30,7 +31,8 @@ const ROLES: {
     cta: "openMonitor",
     href: routes.monitor,
     icon: GlobeIcon,
-    emphasis: true,
+    iconBg: "bg-[var(--palette-teal-75)]",
+    iconFg: "text-[var(--palette-teal-700)]",
   },
   {
     title: "roleVendorTitle",
@@ -38,14 +40,8 @@ const ROLES: {
     cta: "vendorSignIn",
     href: routes.login,
     icon: Briefcase01Icon,
-    emphasis: true,
-  },
-  {
-    title: "roleOperatorTitle",
-    body: "roleOperatorBody",
-    cta: "forOperators",
-    href: routes.admin.home,
-    icon: Shield01Icon,
+    iconBg: "bg-[var(--palette-orange-75)]",
+    iconFg: "text-[var(--palette-orange-700)]",
   },
 ];
 
@@ -58,50 +54,41 @@ export function HomeRoles() {
       title={t("rolesTitle")}
       description={t("rolesSubtitle")}
     >
-      <div className="grid gap-4 md:grid-cols-3">
-        {ROLES.map((role) => (
-          <Surface
-            key={role.title}
-            asChild
-            tone={role.emphasis ? "default" : "muted"}
-            className="group h-full hover:ring-primary/40"
-          >
-          <Link href={role.href} className="flex h-full flex-col gap-4 p-6">
-            <span
-              className={cn(
-                "flex size-10 items-center justify-center rounded-[8px]",
-                role.emphasis
-                  ? "bg-[var(--palette-teal-100)]"
-                  : "bg-[var(--palette-gray-100)]"
-              )}
+      <Surface className="space-y-4 bg-surface p-5 ring-transparent md:p-6">
+        <ul className="grid gap-5 md:grid-cols-2">
+          {ROLES.map((role) => (
+            <FrostCard
+              as="li"
+              key={role.title}
+              className="flex h-full flex-col gap-4 rounded-lg p-6 md:p-5"
             >
-              <HugeiconsIcon
-                icon={role.icon}
-                strokeWidth={1.75}
-                className={cn(
-                  "size-5",
-                  role.emphasis
-                    ? "text-[var(--palette-teal-700)]"
-                    : "text-[var(--palette-gray-700)]"
-                )}
-              />
-            </span>
-            <div className="space-y-2">
-              <h3 className="text-base font-semibold tracking-tight">{t(role.title)}</h3>
-              <p className="text-sm leading-[1.7] text-muted-foreground">{t(role.body)}</p>
-            </div>
-            <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-primary">
-              {t(role.cta)}
-              <HugeiconsIcon
-                icon={ArrowRight01Icon}
-                strokeWidth={2}
-                className="size-3.5 transition-transform group-hover:translate-x-0.5"
-              />
-            </span>
-          </Link>
-          </Surface>
-        ))}
-      </div>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-[8px] ${role.iconBg}`}
+                >
+                  <HugeiconsIcon
+                    icon={role.icon}
+                    strokeWidth={2}
+                    className={`size-5 ${role.iconFg}`}
+                  />
+                </span>
+                <h3 className="text-xl font-semibold tracking-tight">
+                  {t(role.title)}
+                </h3>
+              </div>
+              <p className="text-sm leading-[1.7] text-muted-foreground">
+                {t(role.body)}
+              </p>
+              <Button asChild variant="outline" className="mt-auto w-fit">
+                <Link href={role.href}>
+                  {t(role.cta)}
+                  <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
+                </Link>
+              </Button>
+            </FrostCard>
+          ))}
+        </ul>
+      </Surface>
     </HomeSection>
   );
 }

@@ -15,6 +15,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "text-primary",
+        orange:
+          "bg-[color-mix(in_srgb,var(--palette-orange-400)_32%,transparent)] text-[var(--palette-orange-800)] ring-[color-mix(in_srgb,var(--palette-orange-400)_48%,transparent)] hover:bg-[color-mix(in_srgb,var(--palette-orange-400)_44%,transparent)]",
         secondary: "text-secondary-foreground",
         outline:
           "bg-foreground/8 text-foreground ring-foreground/18 hover:bg-foreground/14",

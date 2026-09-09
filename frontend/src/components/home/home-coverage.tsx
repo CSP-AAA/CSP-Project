@@ -1,11 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon, LinkSquare02Icon } from "@hugeicons/core-free-icons";
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { SourceBadge } from "@/components/tor/source-badge";
+import { Button } from "@/components/ui/button";
+import { FrostCard } from "@/components/ui/frost-card";
 import { Surface } from "@/components/ui/surface";
 import { AGENCIES } from "@/config/agencies";
 import { listingsHref, routes } from "@/config/routes";
@@ -19,46 +23,57 @@ export function HomeCoverage() {
       title={t("coverageTitle")}
       description={t("coverageBody")}
     >
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {AGENCIES.map((agency) => {
-          const source = agency.sources[0];
-          return (
+      <Surface className="space-y-4 bg-surface p-5 ring-transparent md:p-6">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {AGENCIES.map((agency) => (
             <li key={agency.id}>
-              <Surface
+              <FrostCard
                 asChild
-                className="flex h-full flex-col gap-2 p-5 hover:ring-primary/40"
+                className="flex h-full flex-col gap-2 p-4 rounded-lg md:p-5 hover:ring-primary/40"
               >
-              <Link href={listingsHref(agency.id)}>
-                <span className="text-lg font-semibold tracking-tight">
-                  {locale === "th" ? agency.shortTh : agency.shortEn}
-                </span>
-                <span className="text-sm leading-relaxed text-muted-foreground">
-                  {locale === "th" ? agency.nameTh : agency.nameEn}
-                </span>
-                {source ? (
-                  <span className="mt-auto pt-3 text-xs leading-relaxed text-muted-foreground">
-                    {locale === "th" ? source.labelTh : source.labelEn}
+                <Link href={listingsHref(agency.id)}>
+                  <span className="flex items-center gap-3">
+                    {agency.logo ? (
+                      <Image
+                        src={agency.logo}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="size-10 shrink-0 rounded-[8px] object-cover"
+                      />
+                    ) : null}
+                    <span className="text-2xl font-semibold tracking-tight">
+                      {locale === "th" ? agency.shortTh : agency.shortEn}
+                    </span>
                   </span>
-                ) : null}
-              </Link>
-              </Surface>
+                  <span className="text-sm leading-relaxed text-muted-foreground">
+                    {locale === "th" ? agency.nameTh : agency.nameEn}
+                  </span>
+                  {agency.sources.length > 0 ? (
+                    <span className="mt-auto flex flex-wrap gap-1.5 pt-3">
+                      {agency.sources.map((source) => (
+                        <SourceBadge key={source.kind} kind={source.kind} />
+                      ))}
+                    </span>
+                  ) : null}
+                </Link>
+              </FrostCard>
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
 
-      <Surface className="flex flex-wrap items-center justify-between gap-4 bg-[var(--palette-teal-50)] px-5 py-4 ring-0">
-        <p className="flex items-center gap-2 text-sm text-[var(--palette-teal-900)]">
-          <HugeiconsIcon icon={LinkSquare02Icon} strokeWidth={1.75} className="size-4" />
-          {t("coverageTrust")}
-        </p>
-        <Link
-          href={routes.tors}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--palette-teal-900)] hover:underline"
-        >
-          {t("viewAllTors")}
-          <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5" />
-        </Link>
+        <FrostCard className="flex flex-wrap items-center justify-between gap-4 rounded-lg p-5 md:p-4">
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <HugeiconsIcon icon={LinkSquare02Icon} strokeWidth={1.75} className="size-4" />
+            {t("coverageTrust")}
+          </p>
+          <Button asChild variant="orange">
+            <Link href={routes.tors}>
+              {t("viewAllTors")}
+              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
+            </Link>
+          </Button>
+        </FrostCard>
       </Surface>
     </HomeSection>
   );

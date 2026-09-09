@@ -11,6 +11,9 @@ const SIZE = {
   md: { className: "h-10 w-auto", width: 220, height: 48 },
   lg: { className: "h-12 w-auto md:h-14", width: 320, height: 72 },
   xl: { className: "h-14 w-auto md:h-20", width: 400, height: 90 },
+  xxl: { className: "h-16 w-auto md:h-24", width: 480, height: 108 },
+  xxxl: { className: "h-20 w-auto md:h-28", width: 560, height: 126 },
+  xxxxl: { className: "h-24 w-auto md:h-32", width: 640, height: 144 },
 } as const;
 
 /**

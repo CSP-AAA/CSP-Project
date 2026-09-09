@@ -1,11 +1,13 @@
 "use client";
 
+import { useServerInsertedHTML } from "next/navigation";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -30,6 +32,18 @@ function applyTheme(theme: Theme) {
 export const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(STORAGE_KEY)});var dark=t==="dark";document.documentElement.classList.toggle("dark",dark);document.documentElement.classList.toggle("light",!dark);document.documentElement.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const inserted = useRef(false);
+  useServerInsertedHTML(() => {
+    if (inserted.current) return null;
+    inserted.current = true;
+    return (
+      <script
+        id="theme-boot"
+        dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
+      />
+    );
+  });
+
   const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {

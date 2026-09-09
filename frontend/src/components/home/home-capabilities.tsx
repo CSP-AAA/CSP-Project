@@ -10,19 +10,40 @@ import {
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { FrostCard } from "@/components/ui/frost-card";
 import { Surface } from "@/components/ui/surface";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
 
-const CAPABILITIES: {
-  title: DictionaryKey;
-  body: DictionaryKey;
-  icon: IconSvgElement;
-}[] = [
-  { title: "capDiscoveryTitle", body: "capDiscoveryBody", icon: Search01Icon },
-  { title: "capLifecycleTitle", body: "capLifecycleBody", icon: Layers01Icon },
-  { title: "capBudgetTitle", body: "capBudgetBody", icon: Analytics01Icon },
-  { title: "capIntegrityTitle", body: "capIntegrityBody", icon: Alert02Icon },
-];
+const CAPABILITIES = [
+  {
+    title: "capDiscoveryTitle",
+    body: "capDiscoveryBody",
+    icon: Search01Icon,
+    iconBg: "bg-[var(--palette-yellow-75)]",
+    iconFg: "text-[var(--palette-yellow-700)]",
+  },
+  {
+    title: "capLifecycleTitle",
+    body: "capLifecycleBody",
+    icon: Layers01Icon,
+    iconBg: "bg-[var(--palette-teal-75)]",
+    iconFg: "text-[var(--palette-teal-700)]",
+  },
+  {
+    title: "capBudgetTitle",
+    body: "capBudgetBody",
+    icon: Analytics01Icon,
+    iconBg: "bg-[var(--palette-blue-75)]",
+    iconFg: "text-[var(--palette-blue-800)]",
+  },
+  {
+    title: "capIntegrityTitle",
+    body: "capIntegrityBody",
+    icon: Alert02Icon,
+    iconBg: "bg-[var(--palette-red-75)]",
+    iconFg: "text-[var(--palette-red-700)]",
+  },
+] as const;
 
 export function HomeCapabilities() {
   const { t } = useLocale();
@@ -33,31 +54,29 @@ export function HomeCapabilities() {
       title={t("capabilitiesTitle")}
       description={t("capabilitiesBody")}
     >
-      <ul className="grid gap-4 md:grid-cols-2">
-        {CAPABILITIES.map((capability) => (
-          <Surface
-            as="li"
-            key={capability.title}
-            className="flex gap-4 p-6"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] bg-[var(--palette-orange-100)]">
-              <HugeiconsIcon
-                icon={capability.icon}
-                strokeWidth={1.75}
-                className="size-5 text-[var(--palette-orange-700)]"
-              />
-            </span>
-            <div className="space-y-2">
-              <h3 className="text-base font-semibold tracking-tight">
-                {t(capability.title)}
-              </h3>
-              <p className="text-sm leading-[1.7] text-muted-foreground">
-                {t(capability.body)}
-              </p>
-            </div>
-          </Surface>
-        ))}
-      </ul>
+      <Surface className="space-y-4 bg-surface p-5 ring-transparent md:p-6">
+        <ul className="grid gap-5 md:grid-cols-2">
+          {CAPABILITIES.map((capability) => (
+            <FrostCard as="li" key={capability.title} className="flex gap-4 p-6 rounded-lg md:p-5">
+              <span className={`flex size-10 shrink-0 items-center justify-center rounded-[8px] ${capability.iconBg}`}>
+                <HugeiconsIcon
+                  icon={capability.icon}
+                  strokeWidth={2}
+                  className={`size-5 ${capability.iconFg}`}
+                />
+              </span>
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold tracking-tight">
+                  {t(capability.title)}
+                </h3>
+                <p className="text-sm leading-[1.7] text-muted-foreground">
+                  {t(capability.body)}
+                </p>
+              </div>
+            </FrostCard>
+          ))}
+        </ul>
+      </Surface>
     </HomeSection>
   );
 }

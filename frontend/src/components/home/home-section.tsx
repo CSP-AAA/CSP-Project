@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
 import { Surface } from "@/components/ui/surface";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+
 
 export function HomeSection({
   eyebrow,
@@ -27,13 +30,10 @@ export function HomeSection({
             onDark ? "text-[var(--palette-teal-200)]" : "text-primary"
           )}
         >
-          <span
-            className={cn(
-              "h-px w-6",
-              onDark ? "bg-[var(--palette-teal-300)]" : "bg-primary"
-            )}
-          />
+        <Badge 
+        className="h-auto px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em]">
           {eyebrow}
+        </Badge>
         </p>
         <h2
           className={cn(
@@ -77,7 +77,15 @@ export function HomeBand({
         tone === "default" && "bg-background"
       )}
     >
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24">{children}</div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12">{children}</div>
     </Surface>
+  );
+}
+
+export function HomeRule() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 sm:px-6" aria-hidden>
+      <hr className="border-0 border-t border-border" />
+    </div>
   );
 }

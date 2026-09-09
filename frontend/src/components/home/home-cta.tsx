@@ -15,25 +15,24 @@ export function HomeCta() {
   return (
     <Surface
       as="section"
-      tone="frost"
-      className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between md:p-8"
+      className="flex flex-col gap-6 bg-surface p-5 ring-transparent md:flex-row md:items-end md:justify-between md:p-6"
     >
       <div className="max-w-2xl space-y-3">
-        <h2 className="text-2xl font-semibold tracking-tight text-white md:text-[2rem] md:leading-[1.2]">
+        <h2 className="text-2xl font-semibold tracking-tight md:text-[2rem] md:leading-[1.2]">
           {t("ctaTitle")}
         </h2>
-        <p className="text-base leading-[1.7] text-[var(--palette-teal-100)]">
+        <p className="text-base leading-[1.7] text-muted-foreground">
           {t("ctaBody")}
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <Button asChild size="lg">
+        <Button asChild size="lg" variant="orange">
           <Link href={routes.tors}>
             {t("browseTors")}
             <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
           </Link>
         </Button>
-        <Button asChild size="lg" variant="chrome">
+        <Button asChild size="lg" variant="outline">
           <Link href={routes.register}>{t("ctaVendorProfile")}</Link>
         </Button>
       </div>
