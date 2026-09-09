@@ -1,8 +1,8 @@
 :root {
   color-scheme: light;
 
-  --font-sans: "Prompt", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Prompt", "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-prompt), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-prompt), "Sora", ui-sans-serif, system-ui, sans-serif;
 
   --palette-black: #05080d;
   --palette-white: #ffffff;

@@ -5,10 +5,9 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 export type Theme = "light" | "dark";
@@ -22,11 +21,34 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+const listeners = new Set<() => void>();
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.classList.toggle("light", theme === "light");
   root.style.colorScheme = theme;
+}
+
+function readTheme(): Theme {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function subscribe(onStoreChange: () => void) {
+  listeners.add(onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    listeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function emit() {
+  listeners.forEach((listener) => listener());
 }
 
 export const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(STORAGE_KEY)});var dark=t==="dark";document.documentElement.classList.toggle("dark",dark);document.documentElement.classList.toggle("light",!dark);document.documentElement.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
@@ -44,19 +66,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     );
   });
 
-  const [theme, setThemeState] = useState<Theme>("light");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const next: Theme = stored === "dark" ? "dark" : "light";
-    setThemeState(next);
-    applyTheme(next);
-  }, []);
+  const theme = useSyncExternalStore(subscribe, readTheme, () => "light");
 
   const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
     window.localStorage.setItem(STORAGE_KEY, next);
     applyTheme(next);
+    emit();
   }, []);
 
   const value = useMemo<ThemeContextValue>(
