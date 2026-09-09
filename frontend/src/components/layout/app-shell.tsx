@@ -19,7 +19,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { NavGroup } from "@/config/navigation";
@@ -29,7 +28,8 @@ import type { DictionaryKey } from "@/lib/i18n/dictionary";
 /**
  * Mint-style shell: frosted 72px App Bar over a Sidebar and a flush
  * content canvas. Chrome overlays the canvas so backdrop-filter can sample it.
- * The canvas is the only page scroll container.
+ * The canvas is the only page scroll container. Page content uses Surface /
+ * Card on that canvas (or on a HomeBand fill).
  */
 export function AppShell({
   nav,
@@ -82,7 +82,7 @@ function ShellSidebar({
   }, [pathname, isMobile, setOpenMobile]);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar>
       <SidebarContent>
         {nav.map((group) => (
           <SidebarGroup key={group.labelKey}>
@@ -97,7 +97,7 @@ function ShellSidebar({
 
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={label}>
+                    <SidebarMenuButton asChild isActive={active}>
                       <Link href={item.href} aria-current={active ? "page" : undefined}>
                         <HugeiconsIcon icon={item.icon} strokeWidth={1.75} />
                         <span>{label}</span>
@@ -111,11 +111,11 @@ function ShellSidebar({
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
-        {showBackToSite ? (
+      {showBackToSite ? (
+        <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t("backToSite")}>
+              <SidebarMenuButton asChild>
                 <Link href={routes.home}>
                   <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={1.75} />
                   <span>{t("backToSite")}</span>
@@ -123,11 +123,8 @@ function ShellSidebar({
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-        ) : null}
-        <SidebarTrigger
-          labels={{ expanded: t("collapseMenu"), collapsed: t("expandMenu") }}
-        />
-      </SidebarFooter>
+        </SidebarFooter>
+      ) : null}
     </Sidebar>
   );
 }

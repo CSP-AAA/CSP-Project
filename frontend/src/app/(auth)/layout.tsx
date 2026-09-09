@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandLockup } from "@/components/layout/brand-lockup";
+import { Surface } from "@/components/ui/surface";
 import { routes } from "@/config/routes";
 
 export default function AuthLayout({
@@ -15,9 +16,9 @@ export default function AuthLayout({
         <Link href={routes.home} className="mb-8 inline-flex">
           <BrandLockup size="lg" priority />
         </Link>
-        <div className="rounded-2xl border border-border/60 bg-surface-elevated p-6 shadow-lg backdrop-blur-md">
+        <Surface tone="elevated" className="p-6">
           {children}
-        </div>
+        </Surface>
       </div>
     </div>
   );

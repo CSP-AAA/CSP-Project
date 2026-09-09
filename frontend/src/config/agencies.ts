@@ -22,6 +22,7 @@ export interface Agency {
   /** e-GP RSS deptId when known. */
   egpDeptId?: string;
   listingUrl: string;
+  logo?: string;
   sources: AgencySource[];
 }
 
@@ -38,6 +39,7 @@ export const AGENCIES: Agency[] = [
     nameEn: "Bangkok Metropolitan Administration",
     nameTh: "กรุงเทพมหานคร",
     listingUrl: "https://opencontract.bangkok.go.th/ocds.html",
+    logo: "/agency_logos/bma.png",
     sources: [
       {
         kind: "bma-ocds",
@@ -63,6 +65,7 @@ export const AGENCIES: Agency[] = [
     nameTh: "กระทรวงดิจิทัลเพื่อเศรษฐกิจและสังคม",
     egpDeptId: "1700",
     listingUrl: "https://www.mdes.go.th/procurement",
+    logo: "/agency_logos/de.png",
     sources: [
       {
         kind: "egp-rss",
@@ -80,6 +83,7 @@ export const AGENCIES: Agency[] = [
     nameEn: "Digital Government Development Agency",
     nameTh: "สำนักงานพัฒนารัฐบาลดิจิทัล (องค์การมหาชน)",
     listingUrl: "https://www.dga.or.th/procurements/",
+    logo: "/agency_logos/dga.png",
     sources: [
       {
         kind: "html",
@@ -97,6 +101,7 @@ export const AGENCIES: Agency[] = [
     nameEn: "Digital Economy Promotion Agency",
     nameTh: "สำนักงานส่งเสริมเศรษฐกิจดิจิทัล",
     listingUrl: "https://www.depa.or.th/procurement/procurement",
+    logo: "/agency_logos/depa.png",
     sources: [
       {
         kind: "html",
@@ -114,6 +119,7 @@ export const AGENCIES: Agency[] = [
     nameTh: "กระทรวงแรงงาน",
     listingUrl:
       "https://www.mol.go.th/procurement_categories/draft-tor-and-tender-documents",
+    logo: "/agency_logos/mol.png",
     sources: [
       {
         kind: "html",

@@ -5,6 +5,8 @@ import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 
 import { HomeSection } from "@/components/home/home-section";
 import { useLocale } from "@/components/providers/locale-provider";
+import { FrostCard } from "@/components/ui/frost-card";
+import { Surface } from "@/components/ui/surface";
 import type { DictionaryKey } from "@/lib/i18n/dictionary";
 
 const COMMITMENTS: DictionaryKey[] = [
@@ -24,21 +26,26 @@ export function HomeTrust() {
       title={t("trustTitle")}
       description={t("trustSubtitle")}
     >
-      <ul className="grid gap-x-8 gap-y-4 md:grid-cols-2">
-        {COMMITMENTS.map((commitment) => (
-          <li
-            key={commitment}
-            className="flex items-start gap-3 border-t border-border pt-4 text-sm leading-[1.7]"
-          >
-            <HugeiconsIcon
-              icon={CheckmarkCircle02Icon}
-              strokeWidth={1.75}
-              className="mt-0.5 size-4 shrink-0 text-accent"
-            />
-            {t(commitment)}
-          </li>
-        ))}
-      </ul>
+      <Surface className="space-y-4 bg-surface p-5 ring-transparent md:p-6">
+        <ul className="grid gap-5 md:grid-cols-2">
+          {COMMITMENTS.map((commitment) => (
+            <FrostCard
+              as="li"
+              key={commitment}
+              className="flex items-start gap-3 rounded-lg p-6 md:p-5"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] bg-[var(--palette-teal-75)]">
+                <HugeiconsIcon
+                  icon={CheckmarkCircle02Icon}
+                  strokeWidth={2}
+                  className="size-5 text-[var(--palette-teal-700)]"
+                />
+              </span>
+              <p className="pt-2 text-sm leading-[1.7]">{t(commitment)}</p>
+            </FrostCard>
+          ))}
+        </ul>
+      </Surface>
     </HomeSection>
   );
 }
