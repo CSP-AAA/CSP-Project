@@ -1,41 +1,8 @@
-const torRepository = require("../../repositories/torRepository");
-const { fetchSmeGpTors } = require("./api/smeGpApi");
-const { fetchBmaTors } = require("./api/bmaApi");
-
-// Persist one normalized batch. Upserting by external refId makes repeat syncs idempotent.
-async function saveTorBatch(tors) {
-  let saved = 0;
-
-  for (const torData of tors) {
-    try {
-      await torRepository.upsertByRefId(torData.refId, torData);
-      saved++;
-    } catch (err) {
-      console.error(`Error saving TOR ${torData.refId}:`, err.message);
-    }
-  }
-
-  return saved;
-}
-
-// Adapt a source's common result into the summary returned by sync endpoints.
-async function syncSource(sourceResultPromise) {
-  const result = await sourceResultPromise;
-  const saved = await saveTorBatch(result.tors);
-
-  return {
-    budgetYear: result.budgetYear,
-    fetched: result.fetched,
-    matched: result.tors.length,
-    method: result.method,
-    saved,
-    source: result.source,
-  };
-}
+const { syncAPI, syncSource } = require("../../jobs/syncAPI");
 
 async function syncSmeGp() {
   console.log("Starting SME-GP data sync...");
-  const result = await syncSource(fetchSmeGpTors());
+  const result = await syncSource("smeGp");
   console.log(
     `SME-GP sync complete. Saved/Updated ${result.saved} of ${result.matched} matched TORs.`,
   );
@@ -44,7 +11,7 @@ async function syncSmeGp() {
 
 async function syncBma() {
   console.log("Starting BMA e-GP2 data sync...");
-  const result = await syncSource(fetchBmaTors());
+  const result = await syncSource("bmaEgp2");
   console.log(
     `BMA e-GP2 sync complete. Saved/Updated ${result.saved} of ${result.matched} matched TORs.`,
   );
@@ -54,10 +21,9 @@ async function syncBma() {
 async function syncAllSources() {
   console.log("Starting procurement data sync...");
   // Each source owns its fetch/mapping details; this layer only coordinates saving.
-  const [smeGpResult, bmaEgp2Result] = await Promise.all([
-    syncSmeGp(),
-    syncBma(),
-  ]);
+  const results = await syncAPI();
+  const smeGpResult = results.find((result) => result.source === "SME-GP");
+  const bmaEgp2Result = results.find((result) => result.source === "BMA-EGP2");
 
   console.log(
     `Procurement sync complete. Saved/Updated ${smeGpResult.saved} ${smeGpResult.source} TORs and ${bmaEgp2Result.saved} ${bmaEgp2Result.source} TORs.`,

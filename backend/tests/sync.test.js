@@ -5,8 +5,10 @@ const vm = require("node:vm");
 const { test } = require("node:test");
 const smeConfig = require("../src/constants/smeGpConstants");
 const bmaConfig = require("../src/constants/bmaConstants");
-const smeApi = require("../src/services/tor/api/smeGpApi");
-const bmaApi = require("../src/services/tor/api/bmaApi");
+const smeFetch = require("../src/services/tor/api/smeGp/fetch");
+const smeAdapter = require("../src/services/tor/api/smeGp/adapter");
+const bmaFetch = require("../src/services/tor/api/bmaEgp2/fetch");
+const bmaAdapter = require("../src/services/tor/api/bmaEgp2/adapter");
 
 // Load coordination modules with fake infrastructure, without starting MongoDB
 // or registering a real cron job. Source tests below run the actual API modules.
@@ -41,10 +43,11 @@ test("SME-GP walks POST pages, deduplicates searches, and filters software TORs"
       }),
     };
   });
-  const result = await smeApi.fetchSmeGpTors();
+  const raw = await smeFetch.fetch();
+  const result = { ...raw, fetched: raw.rows.length, tors: smeAdapter.adapt(raw.rows), source: smeFetch.source };
   assert.equal(calls.length, smeConfig.SEARCH_TERMS.length * 2);
   assert.ok(calls.some((call) => call.start === String(smeConfig.PAGE_SIZE)));
-  assert.equal(result.fetched, 2);
+  assert.equal(result.fetched, smeConfig.SEARCH_TERMS.length * 2);
   assert.equal(result.tors.length, 1);
   assert.equal(result.tors[0].refId, "sme-1");
   assert.equal(result.tors[0].budgetThb, 1200000);
@@ -74,26 +77,33 @@ test("BMA uses its own GET configuration, follows pages, and maps software plans
       }),
     };
   });
-  const result = await bmaApi.fetchBmaTors();
+  const raw = await bmaFetch.fetch();
+  const result = { ...raw, fetched: raw.rows.length, tors: bmaAdapter.adapt(raw.rows), source: bmaFetch.source };
   assert.deepEqual(calls, [1, 2]);
   assert.equal(result.fetched, 2);
   assert.equal(result.tors.length, 1);
   assert.equal(result.tors[0].refId, "bma-1");
   assert.equal(result.tors[0].budgetThb, 2500000);
   assert.equal(result.tors[0].egpUrl, `${bmaConfig.PLAN_URL}/1`);
-  assert.equal(result.budgetYear, bmaConfig.BUDGET_YEAR);
+  assert.equal(result.metadata.budgetYear, bmaConfig.BUDGET_YEAR);
   assert.equal(result.source, "BMA-EGP2");
 });
 
 test("sync service upserts each source and preserves the HTTP summary fields", async () => {
   const saved = [];
+  const sme = { source: "SME-GP", method: "POST", fetched: 3, matched: 1, saved: 1 };
+  const bma = { source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 4, matched: 1, saved: 1 };
   const service = loadModule("../src/services/tor/syncService.js", {
-    "../../repositories/torRepository": { upsertByRefId: async (refId, tor) => saved.push([refId, tor]) },
-    "./api/smeGpApi": { fetchSmeGpTors: async () => ({ source: "SME-GP", method: "POST", fetched: 3, tors: [{ refId: "sme-1" }] }) },
-    "./api/bmaApi": { fetchBmaTors: async () => ({ source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 4, tors: [{ refId: "bma-1" }] }) },
+    "../../jobs/syncAPI": {
+      syncAPI: async () => [sme, bma],
+      syncSource: async (name) => {
+        saved.push([name, name]);
+        return name === "smeGp" ? sme : bma;
+      },
+    },
   });
   const result = await service.syncAllSources();
-  assert.deepEqual(saved.map(([id]) => id).sort(), ["bma-1", "sme-1"]);
+  assert.deepEqual(saved, []);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), {
     fetched: 3, saved: 1, matched: 1, method: "POST", source: "SME-GP",
     bmaEgp2BudgetYear: "2569", bmaEgp2Fetched: 4, bmaEgp2Matched: 1,
@@ -101,10 +111,10 @@ test("sync service upserts each source and preserves the HTTP summary fields", a
   });
   saved.length = 0;
   await service.syncSmeGp();
-  assert.deepEqual(saved.map(([id]) => id), ["sme-1"]);
+  assert.deepEqual(saved.map(([id]) => id), ["smeGp"]);
   saved.length = 0;
   await service.syncBma();
-  assert.deepEqual(saved.map(([id]) => id), ["bma-1"]);
+  assert.deepEqual(saved.map(([id]) => id), ["bmaEgp2"]);
 });
 
 for (const flag of [undefined, "false", "true"]) {
