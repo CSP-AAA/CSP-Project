@@ -89,7 +89,7 @@ test("BMA uses its own GET configuration, follows pages, and maps software plans
   assert.equal(result.source, "BMA-EGP2");
 });
 
-test("sync job adapts and upserts each fetched API source", async () => {
+test("sync job adapts and persists each fetched API source", async () => {
   const saved = [];
   const job = loadModule("../src/jobs/syncAPI.js", {
     "node:fs": { readdirSync: () => [{ name: "smeGp", isDirectory: () => true }, { name: "bmaEgp2", isDirectory: () => true }] },
@@ -98,7 +98,7 @@ test("sync job adapts and upserts each fetched API source", async () => {
       const file = parts.at(-1);
       return file === "fetch" || file === "adapter" ? `${file}:${name}` : "api";
     } },
-    "../repositories/torRepository": { upsertByRefId: async (refId) => saved.push(refId) },
+    "../repositories/torRepository": { saveChanged: async (tors) => { saved.push(...tors.map(({ refId }) => refId)); return { created: tors.length, updated: 0, unchanged: 0 }; } },
     "fetch:smeGp": { fetch: async () => ({ rows: [{ refId: "sme-1" }] }), method: "POST", source: "SME-GP" },
     "adapter:smeGp": { adapt: (rows) => rows },
     "fetch:bmaEgp2": { fetch: async () => ({ metadata: { budgetYear: "2569" }, rows: [{ refId: "bma-1" }] }), method: "GET", source: "BMA-EGP2" },
@@ -107,13 +107,37 @@ test("sync job adapts and upserts each fetched API source", async () => {
   const result = await job.syncAPI();
   assert.deepEqual(saved.sort(), ["bma-1", "sme-1"]);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), [
-    { source: "SME-GP", method: "POST", fetched: 1, matched: 1, saved: 1 },
-    { source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 1, matched: 1, saved: 1 },
+    { source: "SME-GP", method: "POST", fetched: 1, matched: 1, created: 1, updated: 0, unchanged: 0 },
+    { source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 1, matched: 1, created: 1, updated: 0, unchanged: 0 },
+  ]);
+});
+
+test("TOR persistence bulk-writes new and changed records but skips identical records", async () => {
+  const existing = [{ _id: "tor-1", refId: "sme-1", source: "SME-GP", title: "Original" }];
+  const writes = [];
+  const repository = loadModule("../src/repositories/torRepository.js", {
+    "node:util": require("node:util"),
+    "../models/TOR": {
+      find: () => ({ lean: async () => existing }),
+      bulkWrite: async (operations) => writes.push(...operations),
+    },
+  });
+
+  const same = { refId: "sme-1", source: "SME-GP", title: "Original" };
+  assert.deepEqual(JSON.parse(JSON.stringify(await repository.saveChanged([same]))), { created: 0, updated: 0, unchanged: 1 });
+  assert.deepEqual(writes, []);
+
+  const changed = { ...same, title: "Revised" };
+  const newTor = { ...same, refId: "sme-2" };
+  assert.deepEqual(JSON.parse(JSON.stringify(await repository.saveChanged([changed, newTor]))), { created: 1, updated: 1, unchanged: 0 });
+  assert.deepEqual(JSON.parse(JSON.stringify(writes)), [
+    { updateOne: { filter: { _id: "tor-1" }, update: { $set: changed } } },
+    { insertOne: { document: newTor } },
   ]);
 });
 
 for (const flag of [undefined, "false", "true"]) {
-  test(`sync job honors FETCH_ON_STARTUP=${flag} and schedules 02:00 Bangkok`, async () => {
+  test(`sync job honors FETCH_ON_STARTUP=${flag} and schedules midnight Bangkok`, async () => {
     let syncs = 0;
     let scheduled;
     const job = loadModule("../src/utils/syncScheduler.js", {
@@ -122,7 +146,7 @@ for (const flag of [undefined, "false", "true"]) {
     }, { FETCH_ON_STARTUP: flag });
     await job.startSyncScheduler();
     assert.equal(syncs, flag === "true" ? 1 : 0);
-    assert.equal(scheduled[0], "0 2 * * *");
+    assert.equal(scheduled[0], "0 0 * * *");
     assert.equal(scheduled[2].timezone, "Asia/Bangkok");
     assert.equal(scheduled[2].noOverlap, true);
     await scheduled[1]();

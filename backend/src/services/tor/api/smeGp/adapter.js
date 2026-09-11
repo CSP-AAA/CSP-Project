@@ -24,15 +24,16 @@ function adapt(rows) {
 
   return [...candidates.values()].flatMap((candidate) => {
     const keyword = matchingKeyword(candidate.title);
-    if (!keyword) return [];
+    const refId = candidate._id || candidate.project_id || candidate.link;
+    if (!keyword || !refId) return [];
     return [{
-      refId: candidate._id || candidate.project_id || `SMEGP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      refId,
       title: candidate.title,
       titleTh: candidate.title,
       department: candidate.deptName,
       departmentTh: candidate.deptName,
       agencyId: candidate.deptsubName || "sme-gp",
-      publishedAt: candidate.published ? new Date(candidate.published) : new Date(),
+      publishedAt: candidate.published ? new Date(candidate.published) : undefined,
       source: SOURCE,
       egpUrl: candidate.link || WEBSITE_URL,
       category: classifyCategory(keyword),

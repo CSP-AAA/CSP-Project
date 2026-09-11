@@ -26,17 +26,19 @@ function adapt(rows) {
     const terms = matchingBmaSoftwareTerms(row.planProjectPlanProjectName);
     if (!terms.length) return [];
     const planId = row.planProjectId || row.planProjectPlanProjectsCode;
+    const refId = row.planProjectPlanProjectsCode || planId;
+    if (!refId) return [];
     const title = row.planProjectPlanProjectName || "Untitled procurement plan";
     const department = row.masterOrgDepartmentName || row.masterOrgGroupName || "Bangkok Metropolitan Administration";
     const termList = terms.join(", ");
     return [{
-      refId: row.planProjectPlanProjectsCode || `BMA-EGP2-${planId}`,
+      refId,
       title,
       titleTh: title,
       department,
       departmentTh: department,
       agencyId: "bma",
-      publishedAt: row.planProjectAnnounceDate ? new Date(row.planProjectAnnounceDate) : new Date(),
+      publishedAt: row.planProjectAnnounceDate ? new Date(row.planProjectAnnounceDate) : undefined,
       source: SOURCE,
       egpUrl: planId ? `${PLAN_URL}/${planId}` : PLAN_URL,
       category: classifyCategory(terms),

@@ -19,12 +19,12 @@ async function startSyncScheduler() {
     await runSync("Startup");
   }
 
-  cron.schedule("0 2 * * *", () => runSync("Scheduled"), {
+  cron.schedule("0 0 * * *", () => runSync("Scheduled"), {
     timezone: "Asia/Bangkok",
     noOverlap: true,
   });
 
-  console.log("BMA/SME-GP sync scheduled for 02:00 Asia/Bangkok daily.");
+  console.log("BMA/SME-GP sync scheduled for 00:00 Asia/Bangkok daily.");
 }
 
 module.exports = { startSyncScheduler };

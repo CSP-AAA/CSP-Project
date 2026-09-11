@@ -16,16 +16,7 @@ function sources() {
 }
 
 async function save(tors) {
-  let saved = 0;
-  for (const tor of tors) {
-    try {
-      await torRepository.upsertByRefId(tor.refId, tor);
-      saved++;
-    } catch (error) {
-      console.error(`Error saving TOR ${tor.refId}:`, error.message);
-    }
-  }
-  return saved;
+  return torRepository.saveChanged(tors);
 }
 
 async function syncSource(name) {
@@ -38,7 +29,7 @@ async function syncSource(name) {
     fetched: result.rows.length,
     matched: tors.length,
     method: source.fetcher.method,
-    saved: await save(tors),
+    ...await save(tors),
     source: source.fetcher.source,
   };
 }
