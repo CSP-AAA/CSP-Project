@@ -16,6 +16,7 @@ function sources() {
 }
 
 async function save(tors) {
+  // Persistence decides whether each fetched TOR is new, changed, or unchanged.
   return torRepository.saveChanged(tors);
 }
 
