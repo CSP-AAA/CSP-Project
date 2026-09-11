@@ -10,12 +10,12 @@ const smeAdapter = require("../src/services/tor/api/smeGp/adapter");
 const bmaFetch = require("../src/services/tor/api/bmaEgp2/fetch");
 const bmaAdapter = require("../src/services/tor/api/bmaEgp2/adapter");
 
-// Load coordination modules with fake infrastructure, without starting MongoDB
-// or registering a real cron job. Source tests below run the actual API modules.
+// Load jobs with fake infrastructure, without starting MongoDB or real cron jobs.
 function loadModule(file, dependencies, env = {}) {
   const module = { exports: {} };
   vm.runInNewContext(readFileSync(path.join(__dirname, file), "utf8"), {
     module,
+    __dirname: path.dirname(path.join(__dirname, file)),
     process: { env },
     console: { log() {}, error() {} },
     require(name) {
@@ -89,32 +89,27 @@ test("BMA uses its own GET configuration, follows pages, and maps software plans
   assert.equal(result.source, "BMA-EGP2");
 });
 
-test("sync service upserts each source and preserves the HTTP summary fields", async () => {
+test("sync job adapts and upserts each fetched API source", async () => {
   const saved = [];
-  const sme = { source: "SME-GP", method: "POST", fetched: 3, matched: 1, saved: 1 };
-  const bma = { source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 4, matched: 1, saved: 1 };
-  const service = loadModule("../src/services/tor/syncService.js", {
-    "../../jobs/syncAPI": {
-      syncAPI: async () => [sme, bma],
-      syncSource: async (name) => {
-        saved.push([name, name]);
-        return name === "smeGp" ? sme : bma;
-      },
-    },
+  const job = loadModule("../src/jobs/syncAPI.js", {
+    "node:fs": { readdirSync: () => [{ name: "smeGp", isDirectory: () => true }, { name: "bmaEgp2", isDirectory: () => true }] },
+    "node:path": { join: (...parts) => {
+      const name = parts.at(-2);
+      const file = parts.at(-1);
+      return file === "fetch" || file === "adapter" ? `${file}:${name}` : "api";
+    } },
+    "../repositories/torRepository": { upsertByRefId: async (refId) => saved.push(refId) },
+    "fetch:smeGp": { fetch: async () => ({ rows: [{ refId: "sme-1" }] }), method: "POST", source: "SME-GP" },
+    "adapter:smeGp": { adapt: (rows) => rows },
+    "fetch:bmaEgp2": { fetch: async () => ({ metadata: { budgetYear: "2569" }, rows: [{ refId: "bma-1" }] }), method: "GET", source: "BMA-EGP2" },
+    "adapter:bmaEgp2": { adapt: (rows) => rows },
   });
-  const result = await service.syncAllSources();
-  assert.deepEqual(saved, []);
-  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
-    fetched: 3, saved: 1, matched: 1, method: "POST", source: "SME-GP",
-    bmaEgp2BudgetYear: "2569", bmaEgp2Fetched: 4, bmaEgp2Matched: 1,
-    bmaEgp2Method: "GET", bmaEgp2Saved: 1, bmaEgp2Source: "BMA-EGP2",
-  });
-  saved.length = 0;
-  await service.syncSmeGp();
-  assert.deepEqual(saved.map(([id]) => id), ["smeGp"]);
-  saved.length = 0;
-  await service.syncBma();
-  assert.deepEqual(saved.map(([id]) => id), ["bmaEgp2"]);
+  const result = await job.syncAPI();
+  assert.deepEqual(saved.sort(), ["bma-1", "sme-1"]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), [
+    { source: "SME-GP", method: "POST", fetched: 1, matched: 1, saved: 1 },
+    { source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 1, matched: 1, saved: 1 },
+  ]);
 });
 
 for (const flag of [undefined, "false", "true"]) {
@@ -123,7 +118,7 @@ for (const flag of [undefined, "false", "true"]) {
     let scheduled;
     const job = loadModule("../src/utils/syncScheduler.js", {
       "node-cron": { schedule: (...args) => { scheduled = args; } },
-      "../services/tor/syncService": { syncAllSources: async () => { syncs++; } },
+      "../jobs/syncAPI": { syncAPI: async () => { syncs++; } },
     }, { FETCH_ON_STARTUP: flag });
     await job.startSyncScheduler();
     assert.equal(syncs, flag === "true" ? 1 : 0);
@@ -139,7 +134,7 @@ test("startup sync failure still enables the nightly job", async () => {
   let scheduled = false;
   const job = loadModule("../src/utils/syncScheduler.js", {
     "node-cron": { schedule: () => { scheduled = true; } },
-    "../services/tor/syncService": { syncAllSources: async () => { throw new Error("API unavailable"); } },
+    "../jobs/syncAPI": { syncAPI: async () => { throw new Error("API unavailable"); } },
   }, { FETCH_ON_STARTUP: "true" });
   await job.startSyncScheduler();
   assert.equal(scheduled, true);

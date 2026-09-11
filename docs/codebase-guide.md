@@ -31,7 +31,7 @@ Google Identity script -> GoogleButton -> POST /api/auth/google
 1. `docker-compose.yml` shows the three runtime services: Next.js frontend,
    Express backend, and MongoDB.
 2. `backend/src/server.js` starts the database and sync job; `backend/src/app.js` wires Express middleware and every API router.
-3. `backend/src/services/tor/syncService.js` coordinates the two procurement imports.
+3. `backend/src/jobs/syncAPI.js` coordinates the procurement imports and database upserts.
 4. `frontend/src/lib/api.ts` maps database-shaped TORs into the frontend `Tor`
    type.
 5. `frontend/src/app/(public)/dashboard/page.tsx` loads those TORs and passes
@@ -94,7 +94,7 @@ Each CRUD controller follows the same shape: read `request.body` or
 | `utils/torUtils.js` | Shared helpers for money parsing, category assignment, and retry waits. |
 | `services/tor/api/smeGpApi.js` | Calls the SME-GP API with `POST`; requests every search page, removes duplicate candidates, and maps software-related rows to the common TOR shape. |
 | `services/tor/api/bmaApi.js` | Calls BMA e-GP2 with `GET`; walks API pages, applies stricter software filters, and maps rows to the same TOR shape. |
-| `services/tor/syncService.js` | Saves normalized records using `refId` upserts, runs sources together, and returns sync summaries. |
+| `jobs/syncAPI.js` | Fetches every source, runs its adapter, saves normalized records using `refId` upserts, and returns sync summaries. |
 | `utils/syncScheduler.js` | Runs the optional startup sync and schedules daily sync at 02:00 Asia/Bangkok. |
 | `controllers/syncController.js` | The manual-sync HTTP entry point. |
 | `scripts/probe-sources.js` | Standalone diagnostic script for testing source availability. |
@@ -111,7 +111,7 @@ JSON structures and use different HTTP methods, but both return this result:
 }
 ```
 
-`services/tor/syncService.js` is the only layer that knows how to persist that result. It
+`jobs/syncAPI.js` is the only layer that knows how to persist that result. It
 uses `findOneAndUpdate(..., { upsert: true })`, so re-running a sync updates an
 existing record instead of creating another record with the same `refId`.
 
@@ -204,7 +204,7 @@ analysis column sorts by `TOR budget / category median`, not by formatted text.
    `backend/src/services/tor/api/<sourceName>Api.js`.
 2. Put its configuration in `backend/src/constants/<sourceName>Constants.js`
    and return the common source result documented above.
-3. Call it from `backend/src/services/tor/syncService.js` and expose a sync route if manual
+3. It is discovered and called by `backend/src/jobs/syncAPI.js`; expose a sync route if manual
    operation is needed.
 4. Add the public source metadata and `DataSourceKind` in
    `frontend/src/config/agencies.ts`.

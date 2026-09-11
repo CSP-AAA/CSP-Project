@@ -4,7 +4,7 @@ const torRepository = require("../repositories/torRepository");
 
 const apiDirectory = join(__dirname, "../services/tor/api");
 
-// Adding an API means adding api/<name>/fetch.js and adapter.js; no registry edit required.
+// Find fetchers so adding api/<name>/fetch.js automatically adds it to the job.
 function sources() {
   return readdirSync(apiDirectory, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -28,7 +28,6 @@ async function save(tors) {
   return saved;
 }
 
-// Fetch raw records, adapt them to the TOR schema, then persist idempotently by refId.
 async function syncSource(name) {
   const source = sources().find((candidate) => candidate.name === name);
   if (!source) throw new Error(`Unknown API source: ${name}`);
@@ -45,7 +44,6 @@ async function syncSource(name) {
 }
 
 async function syncAPI() {
-  // Run every discovered source independently but wait for the complete sync cycle.
   return Promise.all(sources().map(({ name }) => syncSource(name)));
 }
 
