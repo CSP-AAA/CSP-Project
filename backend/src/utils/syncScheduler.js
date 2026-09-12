@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const { syncAllSources } = require("../services/tor/syncService");
+const { syncAPI } = require("../jobs/syncAPI");
 
 // Schedule the TOR synchronization workflow without exposing cron concerns to controllers.
 
@@ -7,7 +7,7 @@ async function startSyncScheduler() {
   async function runSync(trigger) {
     console.log(`Running ${trigger} BMA/SME-GP sync job...`);
     try {
-      const result = await syncAllSources();
+      const result = await syncAPI();
       console.log(`${trigger} sync job completed successfully:`, result);
     } catch (error) {
       console.error(`${trigger} sync job failed:`, error);
@@ -19,12 +19,12 @@ async function startSyncScheduler() {
     await runSync("Startup");
   }
 
-  cron.schedule("0 2 * * *", () => runSync("Scheduled"), {
+  cron.schedule("0 0 * * *", () => runSync("Scheduled"), {
     timezone: "Asia/Bangkok",
     noOverlap: true,
   });
 
-  console.log("BMA/SME-GP sync scheduled for 02:00 Asia/Bangkok daily.");
+  console.log("BMA/SME-GP sync scheduled for 00:00 Asia/Bangkok daily.");
 }
 
 module.exports = { startSyncScheduler };

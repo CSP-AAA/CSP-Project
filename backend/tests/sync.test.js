@@ -5,15 +5,17 @@ const vm = require("node:vm");
 const { test } = require("node:test");
 const smeConfig = require("../src/constants/smeGpConstants");
 const bmaConfig = require("../src/constants/bmaConstants");
-const smeApi = require("../src/services/tor/api/smeGpApi");
-const bmaApi = require("../src/services/tor/api/bmaApi");
+const smeFetch = require("../src/services/tor/api/smeGp/fetch");
+const smeAdapter = require("../src/services/tor/api/smeGp/adapter");
+const bmaFetch = require("../src/services/tor/api/bmaEgp2/fetch");
+const bmaAdapter = require("../src/services/tor/api/bmaEgp2/adapter");
 
-// Load coordination modules with fake infrastructure, without starting MongoDB
-// or registering a real cron job. Source tests below run the actual API modules.
+// Load jobs with fake infrastructure, without starting MongoDB or real cron jobs.
 function loadModule(file, dependencies, env = {}) {
   const module = { exports: {} };
   vm.runInNewContext(readFileSync(path.join(__dirname, file), "utf8"), {
     module,
+    __dirname: path.dirname(path.join(__dirname, file)),
     process: { env },
     console: { log() {}, error() {} },
     require(name) {
@@ -41,10 +43,11 @@ test("SME-GP walks POST pages, deduplicates searches, and filters software TORs"
       }),
     };
   });
-  const result = await smeApi.fetchSmeGpTors();
+  const raw = await smeFetch.fetch();
+  const result = { ...raw, fetched: raw.rows.length, tors: smeAdapter.adapt(raw.rows), source: smeFetch.source };
   assert.equal(calls.length, smeConfig.SEARCH_TERMS.length * 2);
   assert.ok(calls.some((call) => call.start === String(smeConfig.PAGE_SIZE)));
-  assert.equal(result.fetched, 2);
+  assert.equal(result.fetched, smeConfig.SEARCH_TERMS.length * 2);
   assert.equal(result.tors.length, 1);
   assert.equal(result.tors[0].refId, "sme-1");
   assert.equal(result.tors[0].budgetThb, 1200000);
@@ -74,50 +77,76 @@ test("BMA uses its own GET configuration, follows pages, and maps software plans
       }),
     };
   });
-  const result = await bmaApi.fetchBmaTors();
+  const raw = await bmaFetch.fetch();
+  const result = { ...raw, fetched: raw.rows.length, tors: bmaAdapter.adapt(raw.rows), source: bmaFetch.source };
   assert.deepEqual(calls, [1, 2]);
   assert.equal(result.fetched, 2);
   assert.equal(result.tors.length, 1);
   assert.equal(result.tors[0].refId, "bma-1");
   assert.equal(result.tors[0].budgetThb, 2500000);
   assert.equal(result.tors[0].egpUrl, `${bmaConfig.PLAN_URL}/1`);
-  assert.equal(result.budgetYear, bmaConfig.BUDGET_YEAR);
+  assert.equal(result.metadata.budgetYear, bmaConfig.BUDGET_YEAR);
   assert.equal(result.source, "BMA-EGP2");
 });
 
-test("sync service upserts each source and preserves the HTTP summary fields", async () => {
+test("sync job adapts and persists each fetched API source", async () => {
   const saved = [];
-  const service = loadModule("../src/services/tor/syncService.js", {
-    "../../repositories/torRepository": { upsertByRefId: async (refId, tor) => saved.push([refId, tor]) },
-    "./api/smeGpApi": { fetchSmeGpTors: async () => ({ source: "SME-GP", method: "POST", fetched: 3, tors: [{ refId: "sme-1" }] }) },
-    "./api/bmaApi": { fetchBmaTors: async () => ({ source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 4, tors: [{ refId: "bma-1" }] }) },
+  const job = loadModule("../src/jobs/syncAPI.js", {
+    "node:fs": { readdirSync: () => [{ name: "smeGp", isDirectory: () => true }, { name: "bmaEgp2", isDirectory: () => true }] },
+    "node:path": { join: (...parts) => {
+      const name = parts.at(-2);
+      const file = parts.at(-1);
+      return file === "fetch" || file === "adapter" ? `${file}:${name}` : "api";
+    } },
+    "../repositories/torRepository": { saveChanged: async (tors) => { saved.push(...tors.map(({ refId }) => refId)); return { created: tors.length, updated: 0, unchanged: 0 }; } },
+    "fetch:smeGp": { fetch: async () => ({ rows: [{ refId: "sme-1" }] }), method: "POST", source: "SME-GP" },
+    "adapter:smeGp": { adapt: (rows) => rows },
+    "fetch:bmaEgp2": { fetch: async () => ({ metadata: { budgetYear: "2569" }, rows: [{ refId: "bma-1" }] }), method: "GET", source: "BMA-EGP2" },
+    "adapter:bmaEgp2": { adapt: (rows) => rows },
   });
-  const result = await service.syncAllSources();
-  assert.deepEqual(saved.map(([id]) => id).sort(), ["bma-1", "sme-1"]);
-  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
-    fetched: 3, saved: 1, matched: 1, method: "POST", source: "SME-GP",
-    bmaEgp2BudgetYear: "2569", bmaEgp2Fetched: 4, bmaEgp2Matched: 1,
-    bmaEgp2Method: "GET", bmaEgp2Saved: 1, bmaEgp2Source: "BMA-EGP2",
+  const result = await job.syncAPI();
+  assert.deepEqual(saved.sort(), ["bma-1", "sme-1"]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), [
+    { source: "SME-GP", method: "POST", fetched: 1, matched: 1, created: 1, updated: 0, unchanged: 0 },
+    { source: "BMA-EGP2", method: "GET", budgetYear: "2569", fetched: 1, matched: 1, created: 1, updated: 0, unchanged: 0 },
+  ]);
+});
+
+test("TOR persistence bulk-writes new and changed records but skips identical records", async () => {
+  const existing = [{ _id: "tor-1", refId: "sme-1", source: "SME-GP", title: "Original" }];
+  const writes = [];
+  const repository = loadModule("../src/repositories/torRepository.js", {
+    "node:util": require("node:util"),
+    "../models/TOR": {
+      find: () => ({ lean: async () => existing }),
+      bulkWrite: async (operations) => writes.push(...operations),
+    },
   });
-  saved.length = 0;
-  await service.syncSmeGp();
-  assert.deepEqual(saved.map(([id]) => id), ["sme-1"]);
-  saved.length = 0;
-  await service.syncBma();
-  assert.deepEqual(saved.map(([id]) => id), ["bma-1"]);
+
+  const same = { refId: "sme-1", source: "SME-GP", title: "Original" };
+  assert.deepEqual(JSON.parse(JSON.stringify(await repository.saveChanged([same]))), { created: 0, updated: 0, unchanged: 1 });
+  assert.deepEqual(writes, []);
+
+  const changed = { ...same, title: "Revised" };
+  const newTor = { ...same, refId: "sme-2" };
+  assert.deepEqual(JSON.parse(JSON.stringify(await repository.saveChanged([changed, newTor]))), { created: 1, updated: 1, unchanged: 0 });
+  assert.deepEqual(JSON.parse(JSON.stringify(writes)), [
+    { updateOne: { filter: { _id: "tor-1" }, update: { $set: changed } } },
+    { insertOne: { document: newTor } },
+  ]);
 });
 
 for (const flag of [undefined, "false", "true"]) {
-  test(`sync job honors FETCH_ON_STARTUP=${flag} and schedules 02:00 Bangkok`, async () => {
+  test(`sync job honors FETCH_ON_STARTUP=${flag} and schedules midnight Bangkok`, async () => {
     let syncs = 0;
     let scheduled;
     const job = loadModule("../src/utils/syncScheduler.js", {
       "node-cron": { schedule: (...args) => { scheduled = args; } },
-      "../services/tor/syncService": { syncAllSources: async () => { syncs++; } },
+      "../jobs/syncAPI": { syncAPI: async () => { syncs++; } },
     }, { FETCH_ON_STARTUP: flag });
     await job.startSyncScheduler();
     assert.equal(syncs, flag === "true" ? 1 : 0);
-    assert.equal(scheduled[0], "0 2 * * *");
+    assert.equal(scheduled[0], "0 0 * * *");
     assert.equal(scheduled[2].timezone, "Asia/Bangkok");
     assert.equal(scheduled[2].noOverlap, true);
     await scheduled[1]();
@@ -129,7 +158,7 @@ test("startup sync failure still enables the nightly job", async () => {
   let scheduled = false;
   const job = loadModule("../src/utils/syncScheduler.js", {
     "node-cron": { schedule: () => { scheduled = true; } },
-    "../services/tor/syncService": { syncAllSources: async () => { throw new Error("API unavailable"); } },
+    "../jobs/syncAPI": { syncAPI: async () => { throw new Error("API unavailable"); } },
   }, { FETCH_ON_STARTUP: "true" });
   await job.startSyncScheduler();
   assert.equal(scheduled, true);
